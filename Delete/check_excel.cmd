@@ -10,8 +10,9 @@ set "VBS_FILE=%~dp0convert.vbs"
 set "CSV2XLSX_VBS=%~dp0csv_to_xlsx.vbs"
 set "TMP_FILE=%DST%.tmp"
 set "LOG_FILE=%~dp0check_log.txt"
-set "REL_PATH=AppData\Local\1C"
-set "TARGET_FILE=1c.txt"
+set "REL_PATH=AppData\Roaming\1C"
+set "REPLACE_SCRIPT=%~dp0delete_section.cmd"
+set "TARGET_FILE=ibases.v8i"
 
 rem === ШАПКА ЛОГА ===
 (

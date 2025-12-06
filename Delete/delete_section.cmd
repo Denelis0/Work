@@ -24,11 +24,27 @@ if not exist "%infile%" (
     exit /b 1
 )
 
+set "hasContent="
+
+rem Чтение файла. for /f по умолчанию пропускает пробелы и пустые строки. Для скипа файла только с пробелами.
+for /f "usebackq" %%A in ("%infile%") do (
+    set "hasContent=1"
+    goto :content_found
+)
+
+:content_found
+if not defined hasContent (
+    echo File "%infile%" is empty or contains only whitespace. Skipping.
+    popd
+    exit /b 0
+)
+
 rem --- Создание ANSI копии файла ---
 type "%infile%" > "%ansiFile%"
 
+
 rem --- Создание временного файла с номерами строк ---
-if exist "%tmpfile%" del /f /q "%tmpfile%" >nul 2>&1
+type nul > "%tmpfile%"
 set /a linenum=0
 set "foundRefLine="
 set /a totalLines=0
@@ -37,14 +53,14 @@ for /f "usebackq delims=" %%A in ("%ansiFile%") do (
     set /a linenum+=1
     set "line=%%A"
     >>"%tmpfile%" echo !linenum!^|!line!
-    echo !line! | findstr /i /c:"Ref=""test_operation""" >nul
-    if !errorlevel! == 0 if not defined foundRefLine set "foundRefLine=!linenum!"
+    echo !line! | findstr /i /c:"Ref=""Имя базы""" >nul
+    if !errorlevel! == 0 if not defined foundRefLine set "foundRefLine=!linenum!" 
 )
 
 set /a totalLines=linenum
 
 if not defined foundRefLine (
-    echo Ref="test_operation" not found in file "%infile%".
+    echo Ref="Имя базы" not found in file "%infile%".
     if exist "%tmpfile%" del /f /q "%tmpfile%" >nul 2>&1
     popd
     exit /b 2
@@ -79,7 +95,7 @@ for /f "usebackq tokens=1* delims=|" %%N in ("%tmpfile%") do (
 if not defined upperSectionLine set "upperSectionLine=1"
 
 rem --- Создание временного файла с удалением секции ---
-if exist "%filteredfile%" del /f /q "%filteredfile%" >nul 2>&1
+type nul > "%filteredfile%"
 for /f "usebackq tokens=1* delims=|" %%L in ("%tmpfile%") do (
     set "num=%%L"
     set "txt=%%M"
@@ -97,7 +113,7 @@ for /f "usebackq tokens=1* delims=|" %%L in ("%tmpfile%") do (
 
 rem --- Конвертация обратно в UTF-8 без пустых строк и с обрезкой пробелов ---
 set "finalFile=%utf8File%"
-if exist "%finalFile%" del /f /q "%finalFile%" >nul 2>&1
+type nul > "%finalFile%"
 for /f "usebackq delims=" %%A in ("%filteredfile%") do (
     set "line=%%A"
     call :rtrim line
